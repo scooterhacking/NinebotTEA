@@ -36,7 +36,7 @@ Navigate to the directory containing NinebotTEA and use the command line as foll
 
 **Library Usage:**
 
-For firmware development, include NinebotTEA in your project to aid in the secure management of ZIP firmware archives:
+For firmware development, include NinebotTEA in your project to aid in the creation of ready to flash firmware packages:
 
 ```python
 from NinebotTEA import NinebotTEA
@@ -50,6 +50,7 @@ encrypted_data = tea.encrypt(data_to_encrypt)
 # To decrypt data
 decrypted_data = tea.decrypt(encrypted_data)
 ```
+An example code of how complete firmware packages can be created with the aid of this library can be found [here](https://github.com/scooterhacking/fw-zip-package-v3/blob/main/Python/pack.py).
 
 #### Examples
 
@@ -74,7 +75,7 @@ decrypted_data = tea.decrypt(encrypted_data)
 
 #### Contributing
 
-We encourage contributions from those knowledgeable in encryption, scooter firmware, and ZIP archive management. To contribute:
+We encourage contributions from those knowledgeable in encryption, scooter firmware, and scooter hacking in general. To contribute:
 
 1. Fork the repository.
 2. Create a new branch for your feature (`git checkout -b feature/AmazingFeature`).
