@@ -16,22 +16,26 @@ NinebotTEA is an open-source command-line tool and library designed for the encr
 - Optimized for handling ZIP firmware archives.
 
 
+#### Installation
+```bash
+pip install git+https://github.com/scooterhacking/NinebotTEA.git
+```
+
+
 #### Usage
 
 **CLI Usage:**
 
-Navigate to the directory containing NinebotTEA and use the command line as follows:
-
 - **Encrypt Firmware Data:**
 
   ```bash
-  python NinebotTEA.py encrypt <input_path> <output_path> --key <hex_key>
+  ninebottea encrypt <input_path> <output_path> --key <hex_key>
   ```
 
 - **Decrypt Firmware Data:**
 
   ```bash
-  python NinebotTEA.py decrypt <input_path> <output_path> --key <hex_key>
+  ninebottea decrypt <input_path> <output_path> --key <hex_key>
   ```
 
 **Library Usage:**
@@ -39,7 +43,7 @@ Navigate to the directory containing NinebotTEA and use the command line as foll
 For firmware development, include NinebotTEA in your project to aid in the creation of ready to flash firmware packages:
 
 ```python
-from NinebotTEA import NinebotTEA
+from ninebottea import NinebotTEA
 
 # Initialize the TEA algorithm with an optional key
 tea = NinebotTEA(key=your_optional_bytes_key)
