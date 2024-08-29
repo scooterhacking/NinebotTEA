@@ -1,5 +1,6 @@
 class NinebotTEA:
     DEFAULT_KEY = b'\xFE\x80\x1C\xB2\xD1\xEF\x41\xA6\xA4\x17\x31\xF5\xA0\x68\x24\xF0'
+
     def __init__(self, key=None, iv=b'\x00' * 8):
         if key is None:
             key = self.DEFAULT_KEY
@@ -9,7 +10,8 @@ class NinebotTEA:
         self.num_rounds = 32
         self.mask = 0xFFFFFFFF
 
-    def _update_key(self, key):
+    @staticmethod
+    def _update_key(key):
         new_key = bytearray()
         # Convert the key to bytes for processing each byte individually
         key_bytes = b''.join(k.to_bytes(4, 'little') for k in key)
@@ -24,7 +26,7 @@ class NinebotTEA:
         padding_needed = (4 - len(data) % 4) % 4
         data += bytes(padding_needed)  # Add zero bytes to align to 4 bytes
 
-        if ((len(data) % 8) == 0): # if needed, pad before checksum
+        if ((len(data) % 8) == 0):  # if needed, pad before checksum
             data += b'\x00' * 4
 
         # Calculate checksum including the newly added padding
@@ -48,7 +50,8 @@ class NinebotTEA:
 
         return data_without_checksum
 
-    def checksum(self, data):
+    @staticmethod
+    def checksum(data):
         sum_values = sum(int.from_bytes(data[i:i+4], 'little') for i in range(0, len(data), 4))
         sum_values = ((sum_values >> 16) & 0xFFFF) | ((sum_values & 0xFFFF) << 16)
         return sum_values ^ 0xFFFFFFFF
@@ -104,52 +107,3 @@ class NinebotTEA:
             iv = block
             processed_bytes += 8
         return self.verify_and_unpad(decrypted)
-
-def encrypt_file(input_path, output_path, key):
-    tea = NinebotTEA(key=key)
-    try:
-        with open(input_path, 'rb') as f:
-            data = f.read()
-        encrypted_data = tea.encrypt(data)
-        with open(output_path, 'wb') as f:
-            f.write(encrypted_data)
-        print(f"File encrypted successfully and saved to {output_path}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-def decrypt_file(input_path, output_path, key):
-    tea = NinebotTEA(key=key)
-    try:
-        with open(input_path, 'rb') as f:
-            data = f.read()
-        decrypted_data = tea.decrypt(data)
-        with open(output_path, 'wb') as f:
-            f.write(decrypted_data)
-        print(f"File decrypted successfully and saved to {output_path}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-def main():
-    import sys
-    import argparse
-    parser = argparse.ArgumentParser(description='Encrypt or decrypt files using the TEA algorithm.')
-    parser.add_argument('operation', choices=['encrypt', 'decrypt'], help='Operation to perform')
-    parser.add_argument('input_path', help='Path of the file to process')
-    parser.add_argument('output_path', help='Path to save the processed file')
-    parser.add_argument('--key', help='Encryption key as a hex string (e.g., "fe801cb2d1ef41a6a41731f5a06824f0"). Optional.')
-
-    args = parser.parse_args()
-
-    # Convert the key hex string to bytes if provided, otherwise use None to default to internal key
-    key = bytes.fromhex(args.key) if args.key else None
-    if args.key and len(key) != 16:
-        print("Error: Key must be exactly 128 bits (32 hex characters).")
-        sys.exit(1)
-
-    if args.operation == 'encrypt':
-        encrypt_file(args.input_path, args.output_path, key)
-    elif args.operation == 'decrypt':
-        decrypt_file(args.input_path, args.output_path, key)
-
-if __name__ == '__main__':
-    main()
