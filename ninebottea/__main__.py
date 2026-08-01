@@ -1,8 +1,8 @@
 from ninebottea import NinebotTEA
 
 
-def encrypt_file(input_path, output_path, key):
-    tea = NinebotTEA(key=key)
+def encrypt_file(input_path, output_path, key, variant='tea'):
+    tea = NinebotTEA(key=key, variant=variant)
     try:
         with open(input_path, 'rb') as f:
             data = f.read()
@@ -14,8 +14,8 @@ def encrypt_file(input_path, output_path, key):
         print(f"Error: {e}")
 
 
-def decrypt_file(input_path, output_path, key):
-    tea = NinebotTEA(key=key)
+def decrypt_file(input_path, output_path, key, variant='tea'):
+    tea = NinebotTEA(key=key, variant=variant)
     try:
         with open(input_path, 'rb') as f:
             data = f.read()
@@ -35,6 +35,10 @@ def main():
     parser.add_argument('input_path', help='Path of the file to process')
     parser.add_argument('output_path', help='Path to save the processed file')
     parser.add_argument('--key', help='Encryption key as a hex string (e.g., "fe801cb2d1ef41a6a41731f5a06824f0"). Optional.')
+    parser.add_argument('--variant', choices=['tea', 'xtea'], default='tea',
+                        help="Ninebot cipher round: 'tea' (default, classic Ninebot TEA) "
+                             "or 'xtea' (Ninebot XTEA, required by newer firmware versions). Both are "
+                             "Ninebot ciphers sharing the same CBC mode, 1KB rolling key and checksum.")
 
     args = parser.parse_args()
 
@@ -45,9 +49,9 @@ def main():
         sys.exit(1)
 
     if args.operation == 'encrypt':
-        encrypt_file(args.input_path, args.output_path, key)
+        encrypt_file(args.input_path, args.output_path, key, args.variant)
     elif args.operation == 'decrypt':
-        decrypt_file(args.input_path, args.output_path, key)
+        decrypt_file(args.input_path, args.output_path, key, args.variant)
 
 
 if __name__ == '__main__':
