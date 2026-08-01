@@ -1,9 +1,17 @@
 class NinebotTEA:
     DEFAULT_KEY = b'\xFE\x80\x1C\xB2\xD1\xEF\x41\xA6\xA4\x17\x31\xF5\xA0\x68\x24\xF0'
 
-    def __init__(self, key=None, iv=b'\x00' * 8):
+    # Ninebot ships two related block ciphers; select the round with `variant`:
+    #   'tea'  - the classic Ninebot TEA round (default, backwards compatible)
+    #   'xtea' - the Ninebot XTEA round, required by newer firmware versions
+    VARIANTS = ('tea', 'xtea')
+
+    def __init__(self, key=None, iv=b'\x00' * 8, variant='tea'):
         if key is None:
             key = self.DEFAULT_KEY
+        if variant not in self.VARIANTS:
+            raise ValueError(f"variant must be one of {self.VARIANTS}, got {variant!r}")
+        self.variant = variant
         self.key = [int.from_bytes(key[i:i+4], 'little') for i in range(0, 16, 4)]
         self.iv = int.from_bytes(iv, 'little')
         self.delta = 0x9E3779B9
@@ -57,6 +65,17 @@ class NinebotTEA:
         return sum_values ^ 0xFFFFFFFF
 
     def _encrypt_block(self, y, z, key):
+        if self.variant == 'xtea':
+            return self._xtea_encrypt_block(y, z, key)
+        return self._tea_encrypt_block(y, z, key)
+
+    def _decrypt_block(self, y, z, key):
+        if self.variant == 'xtea':
+            return self._xtea_decrypt_block(y, z, key)
+        return self._tea_decrypt_block(y, z, key)
+
+    # -- classic Ninebot TEA round ----------------------------------------
+    def _tea_encrypt_block(self, y, z, key):
         sum = 0
         for _ in range(self.num_rounds):
             sum = (sum + self.delta) & self.mask
@@ -64,12 +83,29 @@ class NinebotTEA:
             z = (z + (((y << 4) + key[2]) ^ (y + sum) ^ ((y >> 5) + key[3]))) & self.mask
         return y, z
 
-    def _decrypt_block(self, y, z, key):
+    def _tea_decrypt_block(self, y, z, key):
         sum = self.delta * self.num_rounds
         for _ in range(self.num_rounds):
             z = (z - (((y << 4) + key[2]) ^ (y + sum) ^ ((y >> 5) + key[3]))) & self.mask
             y = (y - (((z << 4) + key[0]) ^ (z + sum) ^ ((z >> 5) + key[1]))) & self.mask
             sum = (sum - self.delta) & self.mask
+        return y, z
+
+    # -- Ninebot XTEA round (required by newer firmware) ----------------
+    def _xtea_encrypt_block(self, y, z, key):
+        s = 0
+        for _ in range(self.num_rounds):
+            y = (y + ((((z << 4) ^ (z >> 5)) + z) ^ (s + key[s & 3]))) & self.mask
+            s = (s + self.delta) & self.mask
+            z = (z + ((((y << 4) ^ (y >> 5)) + y) ^ (s + key[(s >> 11) & 3]))) & self.mask
+        return y, z
+
+    def _xtea_decrypt_block(self, y, z, key):
+        s = (self.delta * self.num_rounds) & self.mask
+        for _ in range(self.num_rounds):
+            z = (z - ((((y << 4) ^ (y >> 5)) + y) ^ (s + key[(s >> 11) & 3]))) & self.mask
+            s = (s - self.delta) & self.mask
+            y = (y - ((((z << 4) ^ (z >> 5)) + z) ^ (s + key[s & 3]))) & self.mask
         return y, z
 
     def encrypt(self, data):
