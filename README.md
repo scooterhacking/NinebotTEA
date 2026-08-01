@@ -5,7 +5,7 @@
 
 #### Project Overview
 
-NinebotTEA is an open-source command-line tool and library designed for the encryption and decryption needs of Ninebot manufactured scooter firmware. It is based on the Tiny Encryption Algorithm (TEA), tailored specifically to meet the requirements of Ninebot scooter firmware.
+NinebotTEA is an open-source command-line tool and library designed for the encryption and decryption needs of Ninebot manufactured scooter firmware. It is based on the Tiny Encryption Algorithm (TEA) and its XTEA variant, tailored specifically to meet the requirements of Ninebot scooter firmware.
 
 #### Features
 
@@ -13,6 +13,7 @@ NinebotTEA is an open-source command-line tool and library designed for the encr
 - Library capabilities for integration into scooter firmware development projects.
 - Supports Ninebot scooters and Xiaomi scooters manufactured by Ninebot.
 - Customizable encryption keys.
+- Selectable cipher round: classic Ninebot TEA (default) or Ninebot XTEA, which is required by newer firmware versions.
 - Optimized for handling ZIP firmware archives.
 
 
@@ -29,14 +30,16 @@ pip install git+https://github.com/scooterhacking/NinebotTEA.git
 - **Encrypt Firmware Data:**
 
   ```bash
-  ninebottea encrypt <input_path> <output_path> --key <hex_key>
+  ninebottea encrypt <input_path> <output_path> --key <hex_key> [--variant tea|xtea]
   ```
 
 - **Decrypt Firmware Data:**
 
   ```bash
-  ninebottea decrypt <input_path> <output_path> --key <hex_key>
+  ninebottea decrypt <input_path> <output_path> --key <hex_key> [--variant tea|xtea]
   ```
+
+  The optional `--variant` selects the cipher round: `tea` (default, classic Ninebot TEA) or `xtea` (Ninebot XTEA, required by newer firmware versions). Both variants share the same CBC mode, rolling key schedule and checksum.
 
 **Library Usage:**
 
@@ -45,8 +48,9 @@ For firmware development, include NinebotTEA in your project to aid in the creat
 ```python
 from ninebottea import NinebotTEA
 
-# Initialize the TEA algorithm with an optional key
-tea = NinebotTEA(key=your_optional_bytes_key)
+# Initialize with an optional key and cipher variant.
+# variant="tea" (default) or "xtea" (required by newer firmware versions)
+tea = NinebotTEA(key=your_optional_bytes_key, variant="tea")
 
 # To encrypt data
 encrypted_data = tea.encrypt(data_to_encrypt)
